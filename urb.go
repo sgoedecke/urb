@@ -22,29 +22,42 @@ func main() {
   const urbandictionaryApi = "http://api.urbandictionary.com/v0/define?term="
   app := cli.NewApp()
   app.Name = "urb"
-  app.Usage = "lookup urbandictionary.com from the command line"
+  app.Usage = "lookup urbandictionary.com from the command line. For instance: `urb 'fat beats'`"
+
+  app.Flags = []cli.Flag {
+      cli.BoolFlag{
+        Name: "examples, e",
+        Usage: "show definition examples",
+      },
+      cli.IntFlag{
+        Name: "num, n",
+        Value: 1,
+        Usage: "number of results to show",
+      },
+    }
+
   app.Action = func(c *cli.Context) error {
     str := c.Args().Get(0)
     if str == "" {
-      fmt.Println("Error: You must pass a search string. For instance: `urb 'fat beats'`")
+      fmt.Println("Error: You must pass a search string. Run `urb help` for more info")
       return nil
     }
 
     resp, err := http.Get(urbandictionaryApi + url.QueryEscape(str))
     defer resp.Body.Close()
     if err != nil {
-      fmt.Println("Error: Could not reach the Urban Dictionary API, sorry.")
+      fmt.Println("Error: Could not reach the Urban Dictionary API")
     	return nil
     }
 
     var res udResponse
     err = json.NewDecoder(resp.Body).Decode(&res)
     if err != nil {
-      fmt.Println("Error: Could not decode the Urban Dictionary API response.")
+      fmt.Println("Error: Could not decode the Urban Dictionary API response")
       return nil
     }
 
-    printDefinitions(&res, 3, true)
+    printDefinitions(&res, c.Int("num"), c.Bool("examples"))
 
     return nil
   }
