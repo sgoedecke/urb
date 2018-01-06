@@ -6,6 +6,7 @@ import (
   "net/http"
   "encoding/json"
   "github.com/urfave/cli"
+  "net/url"
 )
 
 type udResponse struct {
@@ -14,6 +15,7 @@ type udResponse struct {
 
 type udDefinition struct {
   Definition string `json: definition`
+  Example string `json: example`
 }
 
 func main() {
@@ -23,24 +25,44 @@ func main() {
   app.Usage = "lookup urbandictionary.com from the command line"
   app.Action = func(c *cli.Context) error {
     str := c.Args().Get(0)
-
-    resp, err := http.Get(urbandictionaryApi + str)
-    defer resp.Body.Close()
-    if err != nil {
-    	return nil
-    }
-
-    var f udResponse
-    err = json.NewDecoder(resp.Body).Decode(&f)
-    if err != nil {
+    if str == "" {
+      fmt.Println("Error: You must pass a search string. For instance: `urb 'fat beats'`")
       return nil
     }
 
-    fmt.Println("Looking up: " + str)
-    fmt.Println(f.List[0].Definition)
+    resp, err := http.Get(urbandictionaryApi + url.QueryEscape(str))
+    defer resp.Body.Close()
+    if err != nil {
+      fmt.Println("Error: Could not reach the Urban Dictionary API, sorry.")
+    	return nil
+    }
+
+    var res udResponse
+    err = json.NewDecoder(resp.Body).Decode(&res)
+    if err != nil {
+      fmt.Println("Error: Could not decode the Urban Dictionary API response.")
+      return nil
+    }
+
+    printDefinitions(&res, 3, true)
 
     return nil
   }
 
   app.Run(os.Args)
+}
+
+func printDefinitions(res *udResponse, num int, printExamples bool) {
+  if num > len(res.List) { num = len(res.List) }
+  for i := 0; i < num; i++ {
+    def := res.List[i]
+    if num == 1 {
+      fmt.Println(def.Definition)
+    } else {
+      fmt.Printf("%d: " + def.Definition + "\n", i + 1)
+    }
+    if printExamples {
+      fmt.Println("Example: '" + def.Example + "'\n")
+    }
+  }
 }
