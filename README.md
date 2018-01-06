@@ -1,6 +1,12 @@
 # urb
 
-Urban Dictionary from the command line, in Go
+Urban Dictionary from the command line
+
+## Installation
+
+`brew install https://github.com/sgoedecke/homebrew-cli/raw/master/Formula/urb.rb`
+
+You're welcome to try `brew tap sgoedecke/cli && brew install urb`, if you prefer
 
 ## Usage
 
